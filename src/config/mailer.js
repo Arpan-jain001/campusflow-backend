@@ -1,34 +1,34 @@
-const axios = require("axios");
+// src/config/mailer.js
+const sgMail = require("@sendgrid/mail");
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const FROM_EMAIL = process.env.FROM_EMAIL || "arpanjain00123@gmail.com";
+
+if (!SENDGRID_API_KEY) {
+  console.error("SENDGRID_API_KEY is not set");
+} else {
+  sgMail.setApiKey(SENDGRID_API_KEY);
+}
 
 async function sendMail({ to, subject, html }) {
-  if (!RESEND_API_KEY) {
-    console.error("RESEND_API_KEY is not set");
+  if (!SENDGRID_API_KEY) {
+    console.error("SENDGRID_API_KEY is not set");
     return;
   }
 
-  const from = "CampusFlow by UrbanTales <arpanjain00123@gmail.com>";
-
-  const res = await axios.post(
-    "https://api.resend.com/emails",
-    {
-      from,
-      to,
-      subject,
-      html,
+  const msg = {
+    to,
+    from: {
+      email: FROM_EMAIL,
+      name: "CampusFlow by UrbanTales",
     },
-    {
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
+    subject,
+    html,
+  };
 
-  console.log("Email sent via Resend:", res.data?.id || "");
+  const [response] = await sgMail.send(msg);
+  console.log("Email sent via SendGrid:", response.statusCode);
 }
 
-// Nodemailer transporter ki jagah yahan null export kar rahe,
-// taaki agar kahin se destructuring ho to crash na ho.
+// transporter ab needed nahi, but export structure same rakhne ke liye null
 module.exports = { transporter: null, sendMail };
