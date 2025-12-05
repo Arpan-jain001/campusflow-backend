@@ -1,0 +1,33 @@
+# Node dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build / cache
+dist/
+build/
+.tmp/
+.temp/
+.cache/
+coverage/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Expo / React Native specific (agar kabhi use ho)
+.expo/
+.expo-shared/
