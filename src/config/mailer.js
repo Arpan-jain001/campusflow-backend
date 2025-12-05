@@ -8,7 +8,7 @@ async function sendMail({ to, subject, html }) {
     return;
   }
 
-  const from = "CampusFlow by UrbanTales <no-reply@campusflow.app>";
+  const from = "CampusFlow by UrbanTales <arpanjain00123@gmail.com>";
 
   const res = await axios.post(
     "https://api.resend.com/emails",

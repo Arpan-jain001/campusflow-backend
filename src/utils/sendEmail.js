@@ -11,7 +11,7 @@ async function sendEmail(to, subject, text) {
   await axios.post(
     "https://api.resend.com/emails",
     {
-      from: "CampusFlow by UrbanTales <no-reply@campusflow.app>", // naam/email apna rakh sakta hai
+      from: "CampusFlow by UrbanTales <arpanjain00123@gmail.com>", // naam/email apna rakh sakta hai
       to,
       subject,
       text, // yahi text tum OTP message ke लिए bhej rahe ho
