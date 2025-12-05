@@ -31,7 +31,7 @@ router.post("/forgot-password/start", async (req, res) => {
     const otp = generateOtp();
     const expires = new Date(Date.now() + 10 * 60 * 1000);
 
-    user.resetOtp = otp;
+    user.resetOtp = otp;  
     user.resetOtpExpiresAt = expires;
     await user.save();
 
