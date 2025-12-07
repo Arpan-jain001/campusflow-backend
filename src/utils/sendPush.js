@@ -4,11 +4,14 @@ const expo = new Expo();
 
 async function sendPushNotification(tokens, title, body, data = {}) {
   try {
-    if (!tokens || !tokens.length) return;
+    if (!tokens || !tokens.length) {
+      console.log("sendPushNotification: no tokens passed");
+      return;
+    }
 
     const validTokens = tokens.filter((t) => Expo.isExpoPushToken(t));
     if (!validTokens.length) {
-      console.log("No valid Expo tokens");
+      console.log("sendPushNotification: no valid Expo tokens", tokens);
       return;
     }
 
@@ -20,9 +23,12 @@ async function sendPushNotification(tokens, title, body, data = {}) {
       data,
     }));
 
+    console.log("sendPushNotification: sending messages", messages.length);
+
     const chunks = expo.chunkPushNotifications(messages);
     for (const chunk of chunks) {
-      await expo.sendPushNotificationsAsync(chunk);
+      const tickets = await expo.sendPushNotificationsAsync(chunk);
+      console.log("Expo push tickets:", tickets);
     }
   } catch (err) {
     console.error("Expo push send error", err);
