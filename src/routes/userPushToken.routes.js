@@ -8,11 +8,14 @@ const router = express.Router();
 router.post("/me/push-token", auth, async (req, res) => {
   try {
     const { pushToken } = req.body;
+
     if (!pushToken) {
       return res.status(400).json({ message: "pushToken required" });
     }
 
     await User.findByIdAndUpdate(req.user._id, { pushToken });
+    console.log("Saved push token for user:", req.user._id, pushToken);
+
     res.json({ ok: true });
   } catch (err) {
     console.error("save push token error", err);
