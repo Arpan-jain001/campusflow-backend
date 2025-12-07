@@ -1,26 +1,31 @@
 const { Expo } = require("expo-server-sdk");
+
 const expo = new Expo();
 
-async function sendPushNotification(pushTokens, title, body, data = {}) {
-  const messages = [];
-  for (let token of pushTokens) {
-    if (!Expo.isExpoPushToken(token)) continue;
-    messages.push({
+async function sendPushNotification(tokens, title, body, data = {}) {
+  try {
+    if (!tokens || !tokens.length) return;
+
+    const validTokens = tokens.filter((t) => Expo.isExpoPushToken(t));
+    if (!validTokens.length) {
+      console.log("No valid Expo tokens");
+      return;
+    }
+
+    const messages = validTokens.map((token) => ({
       to: token,
       sound: "default",
       title,
       body,
       data,
-    });
-  }
+    }));
 
-  let chunks = expo.chunkPushNotifications(messages);
-  for (let chunk of chunks) {
-    try {
+    const chunks = expo.chunkPushNotifications(messages);
+    for (const chunk of chunks) {
       await expo.sendPushNotificationsAsync(chunk);
-    } catch (err) {
-      console.error("Expo push chunk error:", err);
     }
+  } catch (err) {
+    console.error("Expo push send error", err);
   }
 }
 

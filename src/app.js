@@ -13,6 +13,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/auth", require("./routes/forgotPassword.routes"));
+app.use("/api", require("./routes/userPushToken.routes"));
+
 app.use("/api/tasks", require("./routes/task.routes"));
 app.use("/api/notes", require("./routes/note.routes"));
 app.use("/api/events", require("./routes/event.routes"));
