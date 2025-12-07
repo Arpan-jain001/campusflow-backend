@@ -1,7 +1,8 @@
 const express = require("express");
 const auth = require("../middleware/auth.middleware");
 const Activity = require("../models/Activity");
-const User = require("../models/User"); // agar needed ho
+const User = require("../models/User");
+const { sendPushNotification } = require("../utils/sendPush");
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ router.get("/activity", auth, isAdmin, async (req, res) => {
   }
 });
 
-// POST /api/admin/activity/broadcast  -> global announcement
+// POST /api/admin/activity/broadcast -> global announcement + push
 router.post("/activity/broadcast", auth, isAdmin, async (req, res) => {
   try {
     const actorId = req.user.id;
@@ -36,8 +37,10 @@ router.post("/activity/broadcast", auth, isAdmin, async (req, res) => {
       return res.status(400).json({ message: "Title is required" });
     }
 
-    // sab active students (ya jo bhi filter chahiye)
-    const users = await User.find({ role: "user" }).select("_id");
+    const users = await User.find({
+      role: "user",
+      status: "active",
+    }).select("_id pushToken");
 
     if (!users.length) {
       return res.status(400).json({ message: "No students found to notify" });
@@ -55,6 +58,27 @@ router.post("/activity/broadcast", auth, isAdmin, async (req, res) => {
     }));
 
     const created = await Activity.insertMany(docs);
+
+    // 🔔 PUSH
+    try {
+      const tokens = users
+        .filter((u) => u.pushToken)
+        .map((u) => u.pushToken);
+
+      if (tokens.length) {
+        await sendPushNotification(
+          tokens,
+          title.trim(),
+          message?.trim() || "New campus announcement.",
+          {
+            kind: "activity",
+            activityId: null, // broadcast
+          }
+        );
+      }
+    } catch (pushErr) {
+      console.error("Activity broadcast push error:", pushErr);
+    }
 
     return res.status(201).json({ count: created.length });
   } catch (err) {

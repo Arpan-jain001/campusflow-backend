@@ -65,7 +65,7 @@ exports.createEvent = async (req, res) => {
       visibility: userRole === "admin" ? "global" : "user",
     });
 
-    // 🔔 PUSH NOTIFICATION: sirf admin global events pe
+    // 🔔 PUSH NOTIFICATION: sirf admin global events
     try {
       if (userRole === "admin") {
         const users = await User.find({
@@ -80,12 +80,15 @@ exports.createEvent = async (req, res) => {
             tokens,
             "New Event",
             event.title || "A new event has been created.",
-            { kind: "event", eventId: event._id.toString() }
+            {
+              kind: "event",
+              eventId: event._id.toString(),
+            }
           );
         }
       }
     } catch (pushErr) {
-      console.error("Event push error", pushErr);
+      console.error("Event push error:", pushErr);
     }
 
     return res.status(201).json(event);

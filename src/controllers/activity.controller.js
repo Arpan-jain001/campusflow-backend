@@ -1,6 +1,8 @@
 const Activity = require("../models/Activity");
+const User = require("../models/User");
+const { sendPushNotification } = require("../utils/sendPush");
 
-// GET /api/activity
+// Student ka feed
 exports.getMyActivity = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -17,7 +19,7 @@ exports.getMyActivity = async (req, res) => {
   }
 };
 
-// POST /api/activity/system  (admin -> single student)
+// Admin -> single student system activity + push
 exports.createSystemActivity = async (req, res) => {
   try {
     const actorId = req.user.id;
@@ -39,6 +41,28 @@ exports.createSystemActivity = async (req, res) => {
       entityId: null,
       typeRef: null,
     });
+
+    // 🔔 push to that single student
+    try {
+      const user = await User.findOne({
+        _id: targetUserId,
+        pushToken: { $ne: null },
+      }).select("pushToken");
+
+      if (user?.pushToken) {
+        await sendPushNotification(
+          [user.pushToken],
+          title.trim(),
+          message?.trim() || "You have a new announcement.",
+          {
+            kind: "activity",
+            activityId: item._id.toString(),
+          }
+        );
+      }
+    } catch (pushErr) {
+      console.error("Activity system push error:", pushErr);
+    }
 
     return res.status(201).json(item);
   } catch (err) {

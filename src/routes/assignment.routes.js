@@ -7,7 +7,7 @@ const requireAdmin = require("../middleware/requireAdmin");
 
 const router = express.Router();
 
-// admin: create assignment (global ya per-student)
+// ADMIN: create assignment (global ya per-student)
 router.post("/", auth, requireAdmin, async (req, res) => {
   try {
     const body = req.body;
@@ -21,20 +21,23 @@ router.post("/", auth, requireAdmin, async (req, res) => {
       course: body.course,
       fileUrl: body.fileUrl,
       resourceLink: body.resourceLink,
-      solutionUrl: body.solutionUrl, // usually blank at create time
+      solutionUrl: body.solutionUrl || null,
       targetUserId: body.targetUserId || null,
       createdBy: req.user._id,
     });
 
-    // 🔔 PUSH NOTIFICATION
+    // 🔔 PUSH NOTIFICATION (global + per‑student)
     try {
       let users;
+
       if (body.targetUserId) {
+        // Sirf ek student
         users = await User.find({
           _id: body.targetUserId,
           pushToken: { $ne: null },
         }).select("pushToken");
       } else {
+        // Sab active students
         users = await User.find({
           role: "user",
           status: "active",
@@ -48,21 +51,24 @@ router.post("/", auth, requireAdmin, async (req, res) => {
           tokens,
           "New Assignment",
           assignment.title || "A new assignment has been posted.",
-          { kind: "assignment", assignmentId: assignment._id.toString() }
+          {
+            kind: "assignment",
+            assignmentId: assignment._id.toString(),
+          }
         );
       }
     } catch (pushErr) {
-      console.error("Assignment push error", pushErr);
+      console.error("Assignment push error:", pushErr);
     }
 
     res.json(assignment);
   } catch (err) {
-    console.error("Create assignment error", err);
+    console.error("Create assignment error:", err);
     res.status(500).json({ message: "Could not create assignment" });
   }
 });
 
-// बाकी routes SAME
+// UPDATE
 router.put("/:id", auth, requireAdmin, async (req, res) => {
   try {
     const assignment = await Assignment.findByIdAndUpdate(
@@ -70,41 +76,46 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
       req.body,
       { new: true }
     );
+    if (!assignment) {
+      return res.status(404).json({ message: "Assignment not found" });
+    }
     res.json(assignment);
   } catch (err) {
-    console.error("Update assignment error", err);
+    console.error("Update assignment error:", err);
     res.status(500).json({ message: "Could not update assignment" });
   }
 });
 
+// DELETE
 router.delete("/:id", auth, requireAdmin, async (req, res) => {
   try {
     await Assignment.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
   } catch (err) {
-    console.error("Delete assignment error", err);
+    console.error("Delete assignment error:", err);
     res.status(500).json({ message: "Could not delete assignment" });
   }
 });
 
+// LIST
 router.get("/", auth, async (req, res) => {
   try {
-    const query = {};
-    const list = await Assignment.find(query).sort({ dueDate: 1 });
+    const list = await Assignment.find({}).sort({ dueDate: 1 });
     res.json(list);
   } catch (err) {
-    console.error("List assignments error", err);
+    console.error("List assignments error:", err);
     res.status(500).json({ message: "Could not fetch assignments" });
   }
 });
 
+// DETAIL
 router.get("/:id", auth, async (req, res) => {
   try {
     const item = await Assignment.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Not found" });
     res.json(item);
   } catch (err) {
-    console.error("Get assignment detail error", err);
+    console.error("Get assignment detail error:", err);
     res.status(500).json({ message: "Could not fetch assignment" });
   }
 });
